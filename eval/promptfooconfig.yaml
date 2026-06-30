@@ -1,0 +1,25 @@
+# promptfoo 로 판정 프롬프트 정확도를 정량 평가한다.
+# 실행:
+#   npm install -g promptfoo
+#   cd eval && UPSTAGE_API_KEY=... promptfoo eval && promptfoo view
+#
+# Upstage API 는 OpenAI 호환이라 base URL 만 변경하면 된다.
+
+providers:
+  - id: openai:chat:solar-pro2
+    config:
+      apiBaseUrl: https://api.upstage.ai/v1
+      apiKey: ${UPSTAGE_API_KEY}
+      temperature: 0.1
+
+prompts:
+  - file://prompt_v1.txt
+  - file://prompt_v2.txt
+
+tests: file://tests.csv
+
+defaultTest:
+  assert:
+    - type: llm-rubric
+      provider: openai:chat:solar-pro2
+      value: "응답이 모범답안(__expected)과 같은 청구 가능성 등급을 제시하고, 근거 조항을 약관에서 인용했는가"
