@@ -71,8 +71,9 @@ with st.sidebar:
 uploaded = st.file_uploader("보험 약관 PDF 업로드", type=["pdf"])
 max_pages = st.number_input(
     "분석할 최대 페이지 수 (속도 조절용, 0 = 전체)",
-    min_value=0, max_value=2000, value=50, step=50,
-    help="약관이 길면 전체 파싱·색인에 수 분이 걸립니다. 데모에서는 50페이지 정도를 권장합니다.",
+    min_value=0, max_value=2000, value=0, step=50,
+    help="보장 내용(담보 목록)은 보통 약관 뒤쪽 '별표'에 있습니다. 정확한 답을 원하면 0(전체)을 "
+         "권장합니다. 시간이 오래 걸리면 핵심 별표가 포함되는 범위로 페이지 수를 지정하세요.",
 )
 if uploaded and st.button("약관 분석 시작"):
     with st.spinner("약관 파싱 + 색인 중... (페이지 수에 따라 수십 초~수 분 소요)"):
@@ -96,8 +97,8 @@ if "index" in st.session_state:
     if mode == "🩺 청구 가능 여부 판정":
         question = st.text_input("어떤 진단/상황인가요?", placeholder="예: 갑상선암 진단을 받았어요")
         if question:
-            with st.spinner("판정 중..."):
-                clauses = index.search(question, k=10)
+            with st.spinner("판정 중... (질문 확장·검색·재정렬)"):
+                clauses = index.smart_search(question)
                 result = judge.judge(question, clauses, user_info=user_info)
 
             badge = {"가능": "🟢", "검토필요": "🟡", "어려움": "🔴", "정보부족": "⚪"}.get(result.get("가능성", ""), "⚪")
@@ -129,7 +130,7 @@ if "index" in st.session_state:
                                  placeholder="예: 이 보험 무엇을 보장해? / 면책기간이 뭐야?")
         if question:
             with st.spinner("답변 중..."):
-                clauses = index.search(question, k=10)
+                clauses = index.smart_search(question)
                 st.write(qa.answer(question, clauses, user_info=user_info))
             with st.expander("검색된 약관 원문 보기"):
                 for c in clauses:

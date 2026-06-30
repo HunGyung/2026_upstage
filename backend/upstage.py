@@ -14,7 +14,7 @@ BASE = "https://api.upstage.ai/v1"
 PAGE_LIMIT = 100  # Document Parse 동기 호출 1회 최대 페이지 수
 
 MAX_RETRIES = 6
-BACKOFF_BASE = 2.0  # 1차 대기 2초, 이후 4, 8, 16 ... 초
+BACKOFF_BASE = 1.0  # 1차 대기 2초, 이후 4, 8, 16 ... 초
 
 
 def _key() -> str:
@@ -48,14 +48,23 @@ def _request(method: str, url: str, *, what: str, **kwargs) -> requests.Response
 
 
 def _parse_one(path: str, output_format: str) -> str:
-    """단일 파일(100페이지 이하)을 파싱한다."""
+    """단일 파일(100페이지 이하)을 파싱한다.
+
+    ocr 모드: PDF면 'auto'(내장 텍스트 레이어 우선, 이미지만 OCR),
+              이미지면 'force'(전체 OCR).
+    """
+    ocr_mode = "auto" if path.lower().endswith(".pdf") else "force"
     with open(path, "rb") as f:
         resp = _request(
             "POST", f"{BASE}/document-digitization",
             what="문서 파싱",
             headers=_headers(),
             files={"document": f},
-            data={"model": "document-parse", "output_formats": f"['{output_format}']"},
+            data={
+                "model": "document-parse",
+                "ocr": ocr_mode,
+                "output_formats": f"['{output_format}']",
+            },
             timeout=600,
         )
     content = resp.json().get("content", {})
@@ -127,7 +136,7 @@ def embed(texts, kind: str = "passage"):
     return [item["embedding"] for item in resp.json()["data"]]
 
 
-def chat(messages, model: str = "solar-pro2", json_mode: bool = False, temperature: float = 0.1) -> str:
+def chat(messages, model: str = "solar-pro3", json_mode: bool = False, temperature: float = 0.1) -> str:
     """Solar Chat 호출. json_mode=True면 JSON object 형식으로 응답을 강제한다."""
     payload = {"model": model, "messages": messages, "temperature": temperature}
     if json_mode:
