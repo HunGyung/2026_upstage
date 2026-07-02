@@ -55,12 +55,11 @@ def _embed_in_batches(texts, kind):
     embeddings = []
     batch, batch_chars = [], 0
     for t in texts:
-        for piece in _hard_split(t, MAX_CHUNK_CHARS, overlap=0):
-            if batch and batch_chars + len(piece) > BATCH_CHAR_LIMIT:
-                embeddings.extend(upstage.embed(batch, kind=kind))
-                batch, batch_chars = [], 0
-            batch.append(piece)
-            batch_chars += len(piece)
+        if batch and batch_chars + len(t) > BATCH_CHAR_LIMIT:
+            embeddings.extend(upstage.embed(batch, kind=kind))
+            batch, batch_chars = [], 0
+        batch.append(t)
+        batch_chars += len(t)
     if batch:
         embeddings.extend(upstage.embed(batch, kind=kind))
     return embeddings

@@ -9,12 +9,15 @@ import time
 import base64
 import json
 import requests
+from dotenv import load_dotenv
 
 BASE = "https://api.upstage.ai/v1"
 PAGE_LIMIT = 100  # Document Parse 동기 호출 1회 최대 페이지 수
 
 MAX_RETRIES = 6
 BACKOFF_BASE = 1.0  # 1차 대기 2초, 이후 4, 8, 16 ... 초
+
+load_dotenv() # .env 파일을 시스템 환경변수로 로드
 
 
 def _key() -> str:
